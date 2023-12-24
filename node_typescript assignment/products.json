@@ -7,46 +7,28 @@
       "id": 1
     },
     {
-      "name": "Ipad",
-      "price": 2599.99,
-      "category": "Electronics",
-      "id": 2
-    },
-    {
-      "name": "Book",
-      "price": 699.99,
-      "category": "Books",
-      "id": 3
-    },
-    {
       "name": "Wrist Watch",
       "price": 1399.99,
       "category": "Fashion",
-      "id": 4
-    },
-    {
-      "name": "Hoodie",
-      "price": 599.99,
-      "category": "Fashion",
-      "id": 5
+      "id": 2
     },
     {
       "name": "Keyboard",
       "price": 920,
       "category": "Electronics",
-      "id": 6
-    },
-    {
-      "name": "Keyboard",
-      "price": 920,
-      "category": "Electronics",
-      "id": 7
+      "id": 3
     },
     {
       "name": "Shirt",
       "price": 799.99,
       "category": "Fashion",
-      "id": 8
+      "id": 4
+    },
+    {
+      "name": "Book",
+      "price": 499.99,
+      "category": "Books",
+      "id": 5
     }
   ]
 }

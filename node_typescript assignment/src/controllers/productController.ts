@@ -119,7 +119,9 @@ export const addProduct = (req: Request, res: Response): void => {
 
         // Determine the next available ID
         const nextId =
-          products?.length > 0 ? Math.max(...products?.map((p) => p.id)) + 1 : 1;
+          products?.length > 0
+            ? Math.max(...products?.map((p) => p.id)) + 1
+            : 1;
 
         // Create the new product with the auto-incremented ID
         const productWithId: Product = {
@@ -301,6 +303,11 @@ export const deleteProductById = (req: Request, res: Response): void => {
 
         // Remove the product at the found index
         const removedProduct = products?.splice(index, 1)[0];
+
+        // Update the IDs for products that come after the deleted one
+        for (let i = index; i < products?.length; i++) {
+          products[i].id = i + 1;
+        }
 
         // Update the original structure with the "products" key
         parsedData.products = products;
