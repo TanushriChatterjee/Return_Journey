@@ -1,23 +1,22 @@
 import { Request, Response } from "express";
+import fs from "fs";
 import { Product, validateProduct } from "../models/productModel";
-import {
-  readFileAndHandleErrors,
-  writeFileAndHandleErrors,
-} from "../fileOperations/fileOperations";
 
 const productsFilePath = "./products.json";
 
 //get all products
 export const getAllProducts = (req: Request, res: Response): void => {
   try {
-    readFileAndHandleErrors(
-      productsFilePath,
-      (data) => {
-        const products: Product[] = JSON.parse(data);
-        res.json(products);
-      },
-      res
-    );
+    fs.readFile(productsFilePath, "utf8", (err, data) => {
+      if (err) {
+        console.error("Error reading file:", err);
+        res.status(500).send("Internal Server Error");
+        return;
+      }
+
+      const products: Product[] = JSON.parse(data);
+      res.json(products);
+    });
   } catch (error) {
     console.error("Error:", error);
     res.status(500).send("Internal Server Error");
@@ -34,42 +33,44 @@ export const getProductById = (req: Request, res: Response): void => {
       return;
     }
 
-    readFileAndHandleErrors(
-      productsFilePath,
-      (data) => {
-        try {
-          const parsedData = JSON.parse(data);
+    fs.readFile(productsFilePath, "utf8", (err, data) => {
+      if (err) {
+        console.error("Error reading file:", err);
+        res.status(500).send("Internal Server Error");
+        return;
+      }
 
-          if (
-            !parsedData ||
-            !parsedData?.products ||
-            !Array.isArray(parsedData?.products)
-          ) {
-            console.error(
-              "Error: Invalid or missing products array in the JSON data"
-            );
-            res.status(500).send("Internal Server Error");
-            return;
-          }
+      try {
+        const parsedData = JSON.parse(data);
 
-          const products: Product[] = parsedData?.products;
-          const product: Product | undefined = products?.find(
-            (p) => p.id === productId
+        if (
+          !parsedData ||
+          !parsedData?.products ||
+          !Array.isArray(parsedData?.products)
+        ) {
+          console.error(
+            "Error: Invalid or missing products array in the JSON data"
           );
-
-          if (!product) {
-            res.status(404).json({ error: "Product not found" });
-            return;
-          }
-
-          res.json(product);
-        } catch (parseError) {
-          console.error("Error parsing products data:", parseError);
           res.status(500).send("Internal Server Error");
+          return;
         }
-      },
-      res
-    );
+
+        const products: Product[] = parsedData?.products;
+        const product: Product | undefined = products?.find(
+          (p) => p.id === productId
+        );
+
+        if (!product) {
+          res.status(404).json({ error: "Product not found" });
+          return;
+        }
+
+        res.json(product);
+      } catch (parseError) {
+        console.error("Error parsing products data:", parseError);
+        res.status(500).send("Internal Server Error");
+      }
+    });
   } catch (error) {
     console.error("Error:", error);
     res.status(500).send("Internal Server Error");
@@ -91,57 +92,70 @@ export const addProduct = (req: Request, res: Response): void => {
       return;
     }
 
-    readFileAndHandleErrors(
-      productsFilePath,
-      (data) => {
-        try {
-          const parsedData = JSON.parse(data);
+    // Read the existing products from the file
+    fs.readFile(productsFilePath, "utf8", (err, data) => {
+      if (err) {
+        console.error("Error reading file:", err);
+        res.status(500).send("Internal Server Error");
+        return;
+      }
 
-          if (
-            !parsedData ||
-            !parsedData?.products ||
-            !Array.isArray(parsedData?.products)
-          ) {
-            console.error(
-              "Error: Invalid or missing products array in the JSON data"
-            );
-            res.status(500).send("Internal Server Error");
-            return;
-          }
+      try {
+        const parsedData = JSON.parse(data);
 
-          const products: Product[] = parsedData?.products;
-
-          // Determine the next available ID
-          const nextId =
-            products?.length > 0
-              ? Math.max(...products?.map((p) => p.id)) + 1
-              : 1;
-
-          // Create the new product with the auto-incremented ID
-          const productWithId: Product = {
-            ...newProduct,
-            id: nextId,
-          };
-
-          // Add the new product to the array
-          products?.push(productWithId);
-
-          // Update the original structure with the "products" key
-          parsedData.products = products;
-
-          // Write the updated products array back to the file
-          writeFileAndHandleErrors(
-            productsFilePath,
-            JSON.stringify(parsedData, null, 2),
-            res
+        if (
+          !parsedData ||
+          !parsedData?.products ||
+          !Array.isArray(parsedData?.products)
+        ) {
+          console.error(
+            "Error: Invalid or missing products array in the JSON data"
           );
-        } catch (parseError) {
-          console.error("Error parsing products data:", parseError);
           res.status(500).send("Internal Server Error");
+          return;
         }
-      },
-      res
-    );
+
+        const products: Product[] = parsedData?.products;
+
+        // Determine the next available ID
+        const nextId =
+          products?.length > 0 ? Math.max(...products?.map((p) => p.id)) + 1 : 1;
+
+        // Create the new product with the auto-incremented ID
+        const productWithId: Product = {
+          ...newProduct,
+          id: nextId,
+        };
+
+        // Add the new product to the array
+        products?.push(productWithId);
+
+        // Update the original structure with the "products" key
+        parsedData.products = products;
+
+        // Write the updated products array back to the file
+        fs.writeFile(
+          productsFilePath,
+          JSON.stringify(parsedData, null, 2),
+          "utf8",
+          (err) => {
+            if (err) {
+              console.error("Error writing file:", err);
+              res.status(500).send("Internal Server Error");
+              return;
+            }
+
+            res.status(201).json({
+              message: "Product added successfully",
+              product: productWithId,
+            });
+          }
+        );
+      } catch (parseError) {
+        console.error("Error parsing products data:", parseError);
+        res.status(500).send("Internal Server Error");
+      }
+    });
   } catch (error) {
     console.error("Error:", error);
     res.status(500).send("Internal Server Error");
@@ -170,57 +184,72 @@ export const updateProductById = (req: Request, res: Response): void => {
       return;
     }
 
-    readFileAndHandleErrors(
-      productsFilePath,
-      (data) => {
-        try {
-          const parsedData = JSON.parse(data);
+    // Read the existing products from the file
+    fs.readFile(productsFilePath, "utf8", (err, data) => {
+      if (err) {
+        console.error("Error reading file:", err);
+        res.status(500).send("Internal Server Error");
+        return;
+      }
 
-          if (
-            !parsedData ||
-            !parsedData?.products ||
-            !Array.isArray(parsedData?.products)
-          ) {
-            console.error(
-              "Error: Invalid or missing products array in the JSON data"
-            );
-            res.status(500).send("Internal Server Error");
-            return;
-          }
+      try {
+        const parsedData = JSON.parse(data);
 
-          const products: Product[] = parsedData?.products;
-
-          // Find the index of the product with the specified ID
-          const index = products?.findIndex((p) => p.id === productId);
-
-          if (index === -1) {
-            res.status(404).json({ error: "Product not found" });
-            return;
-          }
-
-          // Update the product at the found index
-          products[index] = {
-            ...products[index],
-            ...updatedProduct,
-            id: productId, // Ensure the ID remains the same
-          };
-
-          // Update the original structure with the "products" key
-          parsedData.products = products;
-
-          // Write the updated products array back to the file
-          writeFileAndHandleErrors(
-            productsFilePath,
-            JSON.stringify(parsedData, null, 2),
-            res
+        if (
+          !parsedData ||
+          !parsedData?.products ||
+          !Array.isArray(parsedData?.products)
+        ) {
+          console.error(
+            "Error: Invalid or missing products array in the JSON data"
           );
-        } catch (parseError) {
-          console.error("Error parsing products data:", parseError);
           res.status(500).send("Internal Server Error");
+          return;
         }
-      },
-      res
-    );
+
+        const products: Product[] = parsedData?.products;
+
+        // Find the index of the product with the specified ID
+        const index = products?.findIndex((p) => p.id === productId);
+
+        if (index === -1) {
+          res.status(404).json({ error: "Product not found" });
+          return;
+        }
+
+        // Update the product at the found index
+        products[index] = {
+          ...products[index],
+          ...updatedProduct,
+          id: productId, // Ensure the ID remains the same
+        };
+
+        // Update the original structure with the "products" key
+        parsedData.products = products;
+
+        // Write the updated products array back to the file
+        fs.writeFile(
+          productsFilePath,
+          JSON.stringify(parsedData, null, 2),
+          "utf8",
+          (err) => {
+            if (err) {
+              console.error("Error writing file:", err);
+              res.status(500).send("Internal Server Error");
+              return;
+            }
+
+            res.json({
+              message: "Product updated successfully",
+              product: products[index],
+            });
+          }
+        );
+      } catch (parseError) {
+        console.error("Error parsing products data:", parseError);
+        res.status(500).send("Internal Server Error");
+      }
+    });
   } catch (error) {
     console.error("Error:", error);
     res.status(500).send("Internal Server Error");
@@ -237,7 +266,14 @@ export const deleteProductById = (req: Request, res: Response): void => {
       return;
     }
 
-    readFileAndHandleErrors(productsFilePath, (data) => {
+    // Read the existing products from the file
+    fs.readFile(productsFilePath, "utf8", (err, data) => {
+      if (err) {
+        console.error("Error reading file:", err);
+        res.status(500).send("Internal Server Error");
+        return;
+      }
+
       try {
         const parsedData = JSON.parse(data);
 
@@ -270,29 +306,28 @@ export const deleteProductById = (req: Request, res: Response): void => {
         parsedData.products = products;
 
         // Write the updated products array back to the file
-        writeFileAndHandleErrors(
+        fs.writeFile(
           productsFilePath,
           JSON.stringify(parsedData, null, 2),
-          res
-        );
+          "utf8",
+          (err) => {
+            if (err) {
+              console.error("Error writing file:", err);
+              res.status(500).send("Internal Server Error");
+              return;
+            }
 
-        // Update the IDs of the remaining products to ensure continuity
-        const updatedProducts = products.map((p, i) => ({
-          ...p,
-          id: i + 1,
-        }));
-
-        // Write the updated products array back to the file
-        writeFileAndHandleErrors(
-          productsFilePath,
-          JSON.stringify({ products: updatedProducts }, null, 2),
-          res
+            res.json({
+              message: "Product deleted successfully",
+              product: removedProduct,
+            });
+          }
         );
       } catch (parseError) {
         console.error("Error parsing products data:", parseError);
         res.status(500).send("Internal Server Error");
       }
-    }, res);
+    });
   } catch (error) {
     console.error("Error:", error);
     res.status(500).send("Internal Server Error");

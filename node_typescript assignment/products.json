@@ -26,9 +26,27 @@
     },
     {
       "name": "Hoodie",
-      "price": 399.99,
+      "price": 599.99,
       "category": "Fashion",
       "id": 5
+    },
+    {
+      "name": "Keyboard",
+      "price": 920,
+      "category": "Electronics",
+      "id": 6
+    },
+    {
+      "name": "Keyboard",
+      "price": 920,
+      "category": "Electronics",
+      "id": 7
+    },
+    {
+      "name": "Shirt",
+      "price": 799.99,
+      "category": "Fashion",
+      "id": 8
     }
   ]
 }
