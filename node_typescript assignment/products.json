@@ -1,0 +1,34 @@
+{
+  "products": [
+    {
+      "name": "Laptop",
+      "price": 1499.99,
+      "category": "Electronics",
+      "id": 1
+    },
+    {
+      "name": "Ipad",
+      "price": 2599.99,
+      "category": "Electronics",
+      "id": 2
+    },
+    {
+      "name": "Book",
+      "price": 699.99,
+      "category": "Books",
+      "id": 3
+    },
+    {
+      "name": "Wrist Watch",
+      "price": 1399.99,
+      "category": "Fashion",
+      "id": 4
+    },
+    {
+      "name": "Hoodie",
+      "price": 399.99,
+      "category": "Fashion",
+      "id": 5
+    }
+  ]
+}
